@@ -106,13 +106,13 @@ function createJwt (projectId, privateKeyFile, algorithm) {
 // messageCount.
 // [START iot_mqtt_publish]
 function publishAsync (messageCount, numMessages) {
-  const payload = `${argv.registry_id}/${argv.device_id}-payload-${messageCount}`;
+  const payload = `{"DATA":"${argv.registry_id}","ATTRIBUTES":"${argv.device_id}","MESSAGE_ID":"${messageCount}","Timestamp":"${getDateTime()}",${mySeq()}}`;
   // Publish "payload" to the MQTT topic. qos=1 means at least once delivery.
   // Cloud IoT Core also supports qos=0 for at most once delivery.
   console.log('Publishing message:', payload);
   client.publish(mqttTopic, payload, { qos: 1 });
 
-  const delayMs = argv.message_type === 'events' ? 1000 : 2000;
+  const delayMs = argv.message_type === 'events' ? 1800000 : 2000000;
   if (messageCount < numMessages) {
     // If we have published fewer than numMessage messages, publish payload
     // messageCount + 1 in 1 second.
@@ -192,3 +192,75 @@ client.on('connect', () => {
 // Once all of the messages have been published, the connection to Google Cloud
 // IoT will be closed and the process will exit. See the publishAsync method.
 // [END iot_mqtt_run]
+
+
+// this code is to generate the time stamp
+function getDateTime() {
+
+    var date = new Date();
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+    var min  = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+    var sec  = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+    return year + "-" + month + "-" + day + "T" + hour + ":" + min + ":" + sec;
+};
+
+// this code is to generate random signal data
+var precision = 2;
+
+//coolant level range unit: %
+var cool_lvl_min = 90;
+var cool_lvl_max = 100;
+
+//Coolant temperature unit: DegC
+var cool_temp_min = 70;
+var cool_temp_max = 75;
+
+//oil pressure unit: bar
+var oil_P_min = 1.0;
+var oil_P_max = 1.5;
+
+//battery capacity: %
+var bat_cap_min = 80;
+var bat_cap_max = 83;
+
+//Power output: MW
+var power_out_min = 5;
+var power_out_max = 7;
+
+// Efficiency: %
+var eff_out_min = 30;
+var eff_out_max = 33;
+
+function mySeq (){
+//for (var i = 0; i < 10; i++){
+var cool_lvl = randomMinMax(cool_lvl_min, cool_lvl_max, precision);
+
+var cool_temp = randomMinMax(cool_temp_min, cool_lvl_max, precision);
+
+var oil_P = randomMinMax(oil_P_min, oil_P_max, precision);
+
+var bat_cap = randomMinMax(bat_cap_min, bat_cap_max, precision);
+
+var power_out = randomMinMax(power_out_min, power_out_max, precision);
+
+var eff_out = randomMinMax(eff_out_min, eff_out_max, precision);
+
+const data_payload = `"cool_lvl":"${cool_lvl}","cool_temp":"${cool_temp}","oil_P":"${oil_P}","power_out":"${power_out}","eff_out":"${eff_out}","bat_cap":"${bat_cap}"`;
+
+return data_payload;
+
+};
+
+function randomMinMax(min,max,precision){
+  number = Math.random()*(max-min)+min;
+  var factor = Math.pow(10, precision);
+  return Math.round(number * factor) / factor;
+};
